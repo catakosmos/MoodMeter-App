@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
@@ -48,32 +47,66 @@ const MoodStep = () => {
         </div>
 
         {/* Question */}
-        <div className="text-center space-y-6">
+        <div className="text-center space-y-8">
           <h2 className="text-xl font-semibold text-foreground">
             ¿Cómo describirías tu estado de ánimo?
           </h2>
           
-          {/* Mood Selection Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            {moods.map((mood) => (
-              <Card
-                key={mood.value}
-                className={`
-                  p-6 cursor-pointer transition-all duration-200 hover:scale-105 text-center space-y-3
-                  ${selectedMood === mood.value 
-                    ? `bg-${mood.color}/20 border-${mood.color} shadow-mood ring-2 ring-${mood.color}/50` 
-                    : 'hover:shadow-soft'
-                  }
-                `}
-                onClick={() => handleMoodSelect(mood.value)}
-              >
-                <div className="text-4xl">{mood.emoji}</div>
-                <p className="font-medium text-foreground">
-                  {mood.label}
-                </p>
-              </Card>
-            ))}
+          {/* Emotion Roulette */}
+          <div className="relative w-80 h-80 mx-auto">
+            {/* Center circle */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 backdrop-blur-sm border-2 border-primary/30 flex items-center justify-center shadow-lg">
+                <span className="text-sm font-medium text-foreground">
+                  Selecciona
+                </span>
+              </div>
+            </div>
+            
+            {/* Emotion circles arranged in a circle */}
+            {moods.map((mood, index) => {
+              const angle = (index * 360) / moods.length - 90; // Start from top
+              const radius = 120; // Distance from center
+              const x = Math.cos((angle * Math.PI) / 180) * radius;
+              const y = Math.sin((angle * Math.PI) / 180) * radius;
+              
+              return (
+                <button
+                  key={mood.value}
+                  onClick={() => handleMoodSelect(mood.value)}
+                  className={`
+                    absolute top-1/2 left-1/2 w-20 h-20 rounded-full
+                    flex flex-col items-center justify-center gap-1
+                    transition-all duration-300 hover:scale-110
+                    ${selectedMood === mood.value 
+                      ? 'bg-primary/30 ring-4 ring-primary shadow-lg scale-110' 
+                      : 'bg-card hover:bg-card/80'
+                    }
+                    border-2 border-border
+                  `}
+                  style={{
+                    transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                  }}
+                >
+                  <span className="text-3xl">{mood.emoji}</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {mood.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
+          
+          {/* Selected mood indicator */}
+          {selectedMood && (
+            <div className="animate-fade-in">
+              <p className="text-sm text-muted-foreground">
+                Estado seleccionado: <span className="font-semibold text-foreground">
+                  {moods.find(m => m.value === selectedMood)?.label}
+                </span>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Continue Button */}
