@@ -1,30 +1,77 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 
 const MoodStep = () => {
   const navigate = useNavigate();
-  const [selectedMood, setSelectedMood] = useState<string>("");
+  const [selectedMood, setSelectedMood] = useState<number>(2); // Start at neutral (middle)
+  const [isDragging, setIsDragging] = useState(false);
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   const moods = [
-    { emoji: "😊", label: "Feliz", value: "happy", color: "mood-happy" },
-    { emoji: "😌", label: "Tranquilo", value: "calm", color: "mood-calm" },
-    { emoji: "😢", label: "Triste", value: "sad", color: "mood-sad" },
-    { emoji: "😠", label: "Enojado", value: "angry", color: "mood-angry" },
-    { emoji: "😰", label: "Ansioso", value: "anxious", color: "mood-anxious" }
+    { emoji: "😠", label: "Muy Mal", value: "very-bad", color: "#ef4444" },
+    { emoji: "😢", label: "Mal", value: "bad", color: "#f97316" },
+    { emoji: "😐", label: "Neutral", value: "neutral", color: "#fbbf24" },
+    { emoji: "😊", label: "Bien", value: "good", color: "#a3e635" },
+    { emoji: "😄", label: "Muy Bien", value: "very-good", color: "#22c55e" }
   ];
 
-  const handleMoodSelect = (moodValue: string) => {
-    setSelectedMood(moodValue);
+  const handleSliderInteraction = (clientX: number) => {
+    if (!sliderRef.current) return;
+    
+    const rect = sliderRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, x / rect.width));
+    const index = Math.round(percentage * (moods.length - 1));
+    setSelectedMood(index);
   };
 
-  const handleContinue = () => {
-    if (selectedMood) {
-      // Store the mood selection
-      localStorage.setItem('checkinMood', selectedMood);
-      navigate('/checkin/sleep');
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    handleSliderInteraction(e.clientX);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging) {
+      handleSliderInteraction(e.clientX);
     }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    handleSliderInteraction(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (isDragging && e.touches[0]) {
+      handleSliderInteraction(e.touches[0].clientX);
+    }
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchend', handleMouseUp);
+    }
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  const handleContinue = () => {
+    localStorage.setItem('checkinMood', moods[selectedMood].value);
+    navigate('/checkin/sleep');
   };
 
   return (
@@ -46,75 +93,83 @@ const MoodStep = () => {
           </div>
         </div>
 
-        {/* Question */}
+        {/* Question and Mood Display */}
         <div className="text-center space-y-8">
           <h2 className="text-xl font-semibold text-foreground">
             ¿Cómo describirías tu estado de ánimo?
           </h2>
           
-          {/* Emotion Roulette */}
-          <div className="relative w-80 h-80 mx-auto">
-            {/* Center circle */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 backdrop-blur-sm border-2 border-primary/30 flex items-center justify-center shadow-lg">
-                <span className="text-sm font-medium text-foreground">
-                  Selecciona
-                </span>
+          {/* Selected Mood Display */}
+          <div className="space-y-4 animate-fade-in">
+            <p className="text-lg font-medium text-muted-foreground">
+              Me siento {moods[selectedMood].label}.
+            </p>
+            <div className="text-8xl transition-all duration-300">
+              {moods[selectedMood].emoji}
+            </div>
+            <ChevronDown className="mx-auto text-muted-foreground animate-bounce" size={24} />
+          </div>
+
+          {/* Arc Slider */}
+          <div className="relative pt-8 pb-4">
+            {/* Color segments background */}
+            <div 
+              ref={sliderRef}
+              className="relative h-32 cursor-pointer select-none"
+              onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
+            >
+              {/* Arc segments */}
+              <div className="absolute bottom-0 left-0 right-0 h-24 overflow-hidden">
+                <div className="absolute bottom-0 left-0 right-0 h-48 rounded-t-full flex">
+                  {moods.map((mood, index) => (
+                    <div
+                      key={mood.value}
+                      className="flex-1 transition-opacity duration-200"
+                      style={{
+                        background: mood.color,
+                        opacity: Math.abs(selectedMood - index) <= 1 ? 1 : 0.4
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Slider pointer */}
+              <div
+                className="absolute bottom-0 transition-all duration-200"
+                style={{
+                  left: `${(selectedMood / (moods.length - 1)) * 100}%`,
+                  transform: 'translateX(-50%)'
+                }}
+              >
+                <div className="relative">
+                  <div className="w-12 h-12 bg-background border-4 border-foreground rounded-full shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing">
+                    <div className="w-3 h-3 bg-foreground rounded-full" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Emotion labels */}
+              <div className="absolute -bottom-8 left-0 right-0 flex justify-between text-xs text-muted-foreground px-2">
+                {moods.map((mood, index) => (
+                  <span 
+                    key={mood.value}
+                    className={`transition-all ${selectedMood === index ? 'font-semibold text-foreground scale-110' : ''}`}
+                  >
+                    {mood.emoji}
+                  </span>
+                ))}
               </div>
             </div>
-            
-            {/* Emotion circles arranged in a circle */}
-            {moods.map((mood, index) => {
-              const angle = (index * 360) / moods.length - 90; // Start from top
-              const radius = 120; // Distance from center
-              const x = Math.cos((angle * Math.PI) / 180) * radius;
-              const y = Math.sin((angle * Math.PI) / 180) * radius;
-              
-              return (
-                <button
-                  key={mood.value}
-                  onClick={() => handleMoodSelect(mood.value)}
-                  className={`
-                    absolute top-1/2 left-1/2 w-20 h-20 rounded-full
-                    flex flex-col items-center justify-center gap-1
-                    transition-all duration-300 hover:scale-110
-                    ${selectedMood === mood.value 
-                      ? 'bg-primary/30 ring-4 ring-primary shadow-lg scale-110' 
-                      : 'bg-card hover:bg-card/80'
-                    }
-                    border-2 border-border
-                  `}
-                  style={{
-                    transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
-                  }}
-                >
-                  <span className="text-3xl">{mood.emoji}</span>
-                  <span className="text-xs font-medium text-foreground">
-                    {mood.label}
-                  </span>
-                </button>
-              );
-            })}
           </div>
-          
-          {/* Selected mood indicator */}
-          {selectedMood && (
-            <div className="animate-fade-in">
-              <p className="text-sm text-muted-foreground">
-                Estado seleccionado: <span className="font-semibold text-foreground">
-                  {moods.find(m => m.value === selectedMood)?.label}
-                </span>
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Continue Button */}
-        <div className="pt-8">
+        <div className="pt-12">
           <Button
             onClick={handleContinue}
-            disabled={!selectedMood}
-            className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary-hover hover:to-accent/90 shadow-soft disabled:opacity-50"
+            className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary-hover hover:to-accent/90 shadow-soft"
             size="lg"
           >
             Continuar
