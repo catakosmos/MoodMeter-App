@@ -2,6 +2,7 @@ import { BottomNavigation } from "@/components/BottomNavigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Play, Heart, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Exercises = () => {
   const featuredExercise = {
@@ -72,6 +73,14 @@ const Exercises = () => {
     }
   };
 
+  const slugify = (s: string) =>
+    s
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-muted pb-20">
       <div className="max-w-md mx-auto p-6 space-y-6">
@@ -86,7 +95,8 @@ const Exercises = () => {
         </div>
 
         {/* Featured Exercise */}
-        <Card className="p-6 bg-gradient-to-r from-primary/10 via-accent/10 to-mood-calm/10 border-primary/30 shadow-mood">
+        <Link to={`/ejercicio/${slugify(featuredExercise.title)}`} className="no-underline">
+          <Card className="p-6 bg-gradient-to-r from-primary/10 via-accent/10 to-mood-calm/10 border-primary/30 shadow-mood hover:shadow-mood transition-all cursor-pointer">
           <div className="flex items-start space-x-4">
             <div className="text-4xl">{featuredExercise.icon}</div>
             <div className="flex-1 space-y-3">
@@ -110,13 +120,14 @@ const Exercises = () => {
                   </Badge>
                 </div>
                 
-                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-soft cursor-pointer hover:scale-105 transition-transform">
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-soft">
                   <Play size={16} className="text-primary-foreground ml-1" />
                 </div>
               </div>
             </div>
           </div>
-        </Card>
+          </Card>
+        </Link>
 
         {/* Categories */}
         <div className="space-y-4">
@@ -126,10 +137,12 @@ const Exercises = () => {
           
           <div className="grid gap-4">
             {exercises.map((exercise, index) => (
-              <Card 
-                key={index} 
-                className="p-4 hover:shadow-mood transition-all cursor-pointer group"
+              <Link
+                key={index}
+                to={`/ejercicio/${slugify(exercise.title)}`}
+                className="no-underline"
               >
+                <Card className="p-4 hover:shadow-mood transition-all group cursor-pointer">
                 <div className="flex items-center space-x-4">
                   <div className="text-2xl group-hover:scale-110 transition-transform">
                     {exercise.icon}
@@ -171,7 +184,8 @@ const Exercises = () => {
                     </div>
                   </div>
                 </div>
-              </Card>
+                </Card>
+              </Link>
             ))}
           </div>
         </div>

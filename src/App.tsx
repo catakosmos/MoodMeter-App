@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import Exercises from "./pages/Exercises";
+import ExerciseDetail from "./pages/ExerciseDetail";
 import MoodStep from "./pages/checkin/MoodStep";
 import SleepStep from "./pages/checkin/SleepStep";
 import JournalStep from "./pages/checkin/JournalStep";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/" element={<Onboarding />} />
           <Route path="/home" element={<Home />} />
           <Route path="/exercises" element={<Exercises />} />
+          <Route path="/ejercicio/:slug" element={<ExerciseDetail />} />
           <Route path="/checkin/mood" element={<MoodStep />} />
           <Route path="/checkin/sleep" element={<SleepStep />} />
           <Route path="/checkin/journal" element={<JournalStep />} />
