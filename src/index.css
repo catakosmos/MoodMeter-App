@@ -126,4 +126,26 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+  .slider-vertical-thermometer {
+    /* Rotación. -90deg hace que subir aumente el valor. */
+    transform: rotate(-90deg); 
+    /* Origen CRÍTICO: top left */
+    transform-origin: top left;
+    
+    /* Longitud vertical del Slider (Termómetro). Corregido a 450px. */
+    width: 450px; 
+    height: 10px;
+    cursor: grab; /* Indica que es arrastrable */
+  }
+  
+  /* Asegura que el pulgar (el círculo) también sea arrastrable */
+  .slider-vertical-thermometer [data-radix-slider-thumb] {
+    cursor: grab !important; 
+    /* Estilos visuales del pulgar (thumb): */
+    background-color: hsl(var(--card)); 
+    box-shadow: 0 0 0 8px hsl(var(--primary)); 
+    border: 3px solid hsl(var(--destructive)); 
+    width: 30px;
+    height: 30px;
+  }
 }
